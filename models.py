@@ -13,11 +13,11 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         
         self.net = nn.Sequential(
-            nn.Linear(n_state, 400),
+            nn.Linear(n_state, 256),
             nn.ReLU(),
-            nn.Linear(400, 300),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(300, n_actions),
+            nn.Linear(256, n_actions),
             nn.Tanh()
         )
 
@@ -30,14 +30,14 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
 
         self.obs_net = nn.Sequential(
-            nn.Linear(n_state, 400),
+            nn.Linear(n_state, 256),
             nn.ReLU(),
         )
 
         self.out_net = nn.Sequential(
-            nn.Linear(400 + n_actions, 300),
+            nn.Linear(256 + n_actions, 256),
             nn.ReLU(),
-            nn.Linear(300, 1)
+            nn.Linear(256, 1)
         )
 
     
