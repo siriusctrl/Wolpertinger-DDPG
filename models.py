@@ -56,7 +56,7 @@ class DDPG_Agent():
         # assuming up to one GPU used
         self.USE_CUDA = torch.cuda.is_available()
         print("Using CUDA", self.USE_CUDA)
-        self.device = torch.device("cuda" if USE_CUDA else "cpu")
+        self.device = torch.device("cuda" if self.USE_CUDA else "cpu")
 
         self.n_states = n_states
         self.n_actions = n_actions
