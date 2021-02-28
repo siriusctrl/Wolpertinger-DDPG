@@ -1,12 +1,11 @@
-from io import DEFAULT_BUFFER_SIZE
 import numpy as np
 import torch
-from torch._C import device
 import torch.nn as nn
 from torch.optim import Adam
 
 from explore import OUActionNoise
 from memory import SequentialMemory
+from action_space import Space, Discrete_space
 
 class Actor(nn.Module):
     def __init__(self, n_state, n_actions) -> None:
@@ -181,3 +180,35 @@ class DDPG_Agent():
     
     def seed(self, seed):
         torch.manual_seed(seed)
+
+
+class Wolpertinger_Agent(DDPG_Agent):
+
+    def __init__(self, space_type, max_actions, 
+                        action_low, actions_high, 
+                        n_states, n_actions, k_ratio=0.1) -> None:
+
+        super().__init__(n_states, n_actions)
+
+        if space_type is 'continuous':
+            self.action_space = Space(action_low, actions_high, max_actions)
+            self.k_nearest_neighbors = max(1, int(max_actions*k_ratio))
+        elif space_type is 'discrete':
+            self.action_space = Discrete_space(max_actions)
+            self.k_nearest_neighbors = max(1, max_actions * k_ratio)
+        elif space_type is 'binary':
+            raise NameError('Not supported yet')
+        else:
+            raise NameError('Unknown space type')
+    
+    def get_name(self):
+        from datetime import date
+        return 'Wolp3_{}k{}_{}'.format(self.action_space.get_number_of_actions(),
+                                       self.k_nearest_neighbors, str(date.today()))
+    
+    def get_action_space(self):
+        return self.action_space
+    
+    def wolp_action(self, s_t, proto_action):
+        #get the proto_actions's k nearest neighbors
+        raw_actions, actions = self.action_space.search_point(proto_action, self.k_nearest_neighbors)
