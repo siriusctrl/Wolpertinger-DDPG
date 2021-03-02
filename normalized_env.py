@@ -34,7 +34,7 @@ if __name__ == '__main__':
         return act_k_inv * (action - act_b)
 
     action_space = Box(low=0, high=10, shape=(5,), dtype=np.int32)
-    sample = action_space.sample()
+    sample = [0, 0, 0, 0, 0]
     print(f'The action space is {sample}')
     ac = reverse_action(action_space.high, action_space.low, sample)
     ra = action(action_space.high, action_space.low, ac)

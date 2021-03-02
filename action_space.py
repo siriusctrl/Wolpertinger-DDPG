@@ -107,9 +107,9 @@ class Binary_space(Space):
 
 if __name__ == '__main__':
     """ Tests """
-    # print(init_uniform_space(np.array([0,0,0]), np.array([1,1,1]), 1000))
-    ds = Space([-2], [2], 200000)
-    output, output_2 = ds.search_point(1.4, 5)
-    print(output_2)
-    print(output_2.shape)
+    print(init_uniform_space(np.array([0,0,0]), np.array([1,1,1]), 5))
+    # ds = Space([-2], [2], 200000)
+    # output, output_2 = ds.search_point(1.4, 5)
+    # print(output_2)
+    # print(output_2.shape)
 

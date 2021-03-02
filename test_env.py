@@ -37,16 +37,16 @@ from stable_baselines3.common.env_util import make_vec_env
 if __name__ == '__main__':
     env = NormalizedEnv(test_env())
     model = PPO(MlpPolicy, env, device='cuda', verbose=1)
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=1000)
 
     n = 0
 
     obs = env.reset()
     while n < 100:
         action, _state = model.predict(obs)
-        # print(action)
+        print(action)
         obs, rewards, dones, info = env.step(action)
-        print(info['log'])
+        # print(info['log'])
         n += 1
 
     
