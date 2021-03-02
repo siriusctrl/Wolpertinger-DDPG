@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch._C import device
 import torch.nn as nn
 from torch.optim import Adam
 
@@ -47,7 +48,6 @@ class Critic(nn.Module):
 action_lr = 1e-4
 cirtic_lr = 1e-3
 OU_STD = 0.2
-
 
 
 class DDPG_Agent():
@@ -176,7 +176,7 @@ class DDPG_Agent():
             self.critic.to(device)
 
         else:
-            raise NameError('The target device should be either GPU or CPU')
+            raise NameError('The target device should be either cpu or gpu')
     
     def seed(self, seed):
         torch.manual_seed(seed)
@@ -210,5 +210,60 @@ class Wolpertinger_Agent(DDPG_Agent):
         return self.action_space
     
     def wolp_action(self, s_t, proto_action):
-        #get the proto_actions's k nearest neighbors
-        raw_actions, actions = self.action_space.search_point(proto_action, self.k_nearest_neighbors)
+        raise NotImplementedError
+
+    def select_action(self, s_t, decay_epsilon=True):
+        raise NotImplementedError
+
+    def select_target_action(self, s_t):
+        raise NotImplementedError
+
+    def soft_update(self):
+        for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
+            target_param.data.copy_(
+                target_param.data * (1.0 - self.tau) + param.data * self.tau
+            )
+
+        for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
+            target_param.data.copy_(
+                target_param.data * (1.0 - self.tau) + param.data * self.tau
+            )
+
+    def update_policy(self):
+        state_batch, action_batch, reward_batch, \
+            next_state_batch, terminal_batch = self.buffer.sample_and_split(self.batch_size)
+
+        next_state_batch = torch.FloatTensor(next_state_batch, device=device)
+        next_wolp_action_batch = torch.FloatTensor(
+            self.select_target_action(next_state_batch), 
+            device=device)
+
+        next_q_values = self.critic_target([
+            next_state_batch,
+            next_wolp_action_batch
+        ])
+
+        target_q_batch = torch.FloatTensor(reward_batch, device=device) + self.gamma * \
+                         torch.FloatTensor(terminal_batch.astype(np.float32), device=device) * \
+                         next_q_values
+        
+        self.critic_optim.zero_grad()
+
+        state_batch = torch.FloatTensor(state_batch, device=device)
+        action_batch = torch.FloatTensor(action_batch, device=device)
+        q_batch = self.critic([state_batch, action_batch])
+
+        value_loss = nn.MSELoss(q_batch, target_q_batch)
+        value_loss.backward()
+        self.critic_optim.step()
+
+        self.actor_optim.zero_grad()
+        
+        actor_loss = -self.critic([state_batch, self.actor(state_batch)])
+        actor_loss = actor_loss.mean()
+        actor_loss.backward()
+        self.actor_optim.step()
+
+        self.soft_update()
+        
+
